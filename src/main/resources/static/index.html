@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRiR - Calkowanie Numeryczne</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 8px;
+            font-size: 28px;
+            color: #38bdf8;
+        }
+        .subtitle {
+            text-align: center;
+            color: #94a3b8;
+            margin-bottom: 32px;
+            font-size: 14px;
+        }
+        .panel {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .panel h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: #38bdf8;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 8px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group label {
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .form-group input, .form-group select {
+            background: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: #e2e8f0;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            border-color: #38bdf8;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-success {
+            background: #059669;
+            color: white;
+        }
+        .btn-success:hover { background: #047857; }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th {
+            text-align: left;
+            padding: 10px 12px;
+            background: #0f172a;
+            color: #94a3b8;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #334155;
+        }
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #1e293b;
+        }
+        tr:hover { background: #1e293b; }
+        .status {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-QUEUED { background: #334155; color: #94a3b8; }
+        .status-RUNNING { background: #1e3a5f; color: #38bdf8; animation: pulse 1.5s infinite; }
+        .status-DONE { background: #064e3b; color: #34d399; }
+        .status-FAILED { background: #450a0a; color: #f87171; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .mono { font-family: 'Fira Code', 'Consolas', monospace; font-size: 13px; }
+        .result-box {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 12px;
+            white-space: pre-wrap;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 13px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .benchmark-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+        .benchmark-table th, .benchmark-table td {
+            padding: 8px 12px;
+            text-align: center;
+            border: 1px solid #334155;
+        }
+        .benchmark-table th { background: #0f172a; color: #94a3b8; font-size: 12px; }
+        .benchmark-table td { background: #1e293b; }
+        .empty-msg {
+            text-align: center;
+            color: #64748b;
+            padding: 32px;
+            font-style: italic;
+        }
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 9999;
+            animation: slideIn 0.3s ease-out;
+        }
+        .toast-ok { background: #064e3b; color: #34d399; border: 1px solid #059669; }
+        .toast-err { background: #450a0a; color: #f87171; border: 1px solid #dc2626; }
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .tag {
+            display: inline-block;
+            background: #334155;
+            color: #94a3b8;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-right: 4px;
+        }
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+        .auto-refresh input { accent-color: #38bdf8; }
+        .detail-row { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 8px; }
+        .detail-item { }
+        .detail-label { font-size: 11px; color: #64748b; text-transform: uppercase; }
+        .detail-value { font-size: 15px; color: #e2e8f0; margin-top: 2px; }
+        .section-title {
+            font-size: 14px;
+            color: #38bdf8;
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>PRiR - Calkowanie Numeryczne</h1>
+    <p class="subtitle">Metody: prostokaty | trapezy | kwadratura Gaussa-Legendre</p>
+
+    <div class="panel">
+        <h2>Nowe zadanie</h2>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Metoda calkowania</label>
+                <select id="method">
+                    <option value="TRAPEZOID">Trapezy</option>
+                    <option value="RECTANGLE">Prostokaty</option>
+                    <option value="GAUSS">Gauss-Legendre</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Funkcja f(x)</label>
+                <input type="text" id="function" value="sin(x^2)" placeholder="np. sin(x^2)">
+            </div>
+            <div class="form-group">
+                <label>Dolna granica (a)</label>
+                <input type="number" id="a" value="0" step="any">
+            </div>
+            <div class="form-group">
+                <label>Gorna granica (b)</label>
+                <input type="number" id="b" value="1" step="any">
+            </div>
+            <div class="form-group">
+                <label>Liczba podprzedzialow</label>
+                <input type="number" id="intervals" value="1000000" min="100" step="100">
+            </div>
+            <div class="form-group">
+                <label>Liczba workerow</label>
+                <input type="number" id="workers" value="4" min="1" max="16">
+            </div>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-primary" onclick="createTask()">Oblicz</button>
+            <button class="btn btn-success btn-sm" onclick="createBenchmark()">Oblicz + Benchmark</button>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <h2 style="border:none; padding:0; margin:0;">Lista zadan</h2>
+            <div class="btn-row">
+                <div class="auto-refresh">
+                    <input type="checkbox" id="autoRefresh" checked>
+                    <label for="autoRefresh">Auto-odswiez (2s)</label>
+                </div>
+                <button class="btn btn-sm" style="background:#334155; color:#e2e8f0;" onclick="loadTasks()">Odswiez</button>
+            </div>
+        </div>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Metoda</th>
+                        <th>f(x)</th>
+                        <th>Przedzial</th>
+                        <th>N</th>
+                        <th>Workerow</th>
+                        <th>Status</th>
+                        <th>Wynik</th>
+                        <th>Czas</th>
+                        <th>Akcje</th>
+                    </tr>
+                </thead>
+                <tbody id="taskList">
+                    <tr><td colspan="10" class="empty-msg">Brak zadan. Utworz nowe zadanie powyzej.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="panel" id="detailPanel" style="display:none;">
+        <h2>Szczegoly zadania</h2>
+        <div id="detailContent"></div>
+    </div>
+
+    <div class="panel" id="benchmarkPanel" style="display:none;">
+        <h2>Wyniki benchmarku</h2>
+        <div id="benchmarkContent"></div>
+    </div>
+</div>
+
+<script>
+const API = '';
+let refreshTimer = null;
+
+function toast(msg, ok = true) {
+    const el = document.createElement('div');
+    el.className = 'toast ' + (ok ? 'toast-ok' : 'toast-err');
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+}
+
+function shortId(id) {
+    return id ? id.substring(0, 8) : '';
+}
+
+function statusBadge(status) {
+    return '<span class="status status-' + status + '">' + status + '</span>';
+}
+
+function esc(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+}
+
+async function api(url, opts = {}) {
+    try {
+        const res = await fetch(API + url, {
+            headers: { 'Content-Type': 'application/json' },
+            ...opts
+        });
+        return await res.json();
+    } catch (e) {
+        toast('Blad polaczenia z API: ' + e.message, false);
+        return null;
+    }
+}
+
+async function createTask() {
+    const body = {
+        method: document.getElementById('method').value,
+        function: document.getElementById('function').value,
+        a: parseFloat(document.getElementById('a').value),
+        b: parseFloat(document.getElementById('b').value),
+        intervals: parseInt(document.getElementById('intervals').value),
+        workers: parseInt(document.getElementById('workers').value)
+    };
+
+    const data = await api('/tasks', {
+        method: 'POST',
+        body: JSON.stringify(body)
+    });
+
+    if (data && data.taskId) {
+        toast('Zadanie utworzone: ' + shortId(data.taskId));
+        loadTasks();
+    } else if (data && data.error) {
+        toast(data.error, false);
+    }
+}
+
+async function createBenchmark() {
+    const body = {
+        method: document.getElementById('method').value,
+        function: document.getElementById('function').value,
+        a: parseFloat(document.getElementById('a').value),
+        b: parseFloat(document.getElementById('b').value),
+        intervals: parseInt(document.getElementById('intervals').value),
+        workers: parseInt(document.getElementById('workers').value)
+    };
+
+    const data = await api('/tasks', {
+        method: 'POST',
+        body: JSON.stringify(body)
+    });
+
+    if (data && data.taskId) {
+        toast('Zadanie utworzone - czekam na zakonczenie przed benchmarkiem...');
+        await waitForDone(data.taskId);
+        await showBenchmark(data.taskId);
+    } else if (data && data.error) {
+        toast(data.error, false);
+    }
+}
+
+function waitForDone(taskId, attempts = 60) {
+    return new Promise((resolve) => {
+        const check = async () => {
+            const t = await api('/tasks/' + taskId);
+            if (!t || !t.status) { resolve(); return; }
+            if (t.status === 'DONE' || t.status === 'FAILED') {
+                loadTasks();
+                resolve();
+                return;
+            }
+            attempts--;
+            if (attempts <= 0) { resolve(); return; }
+            setTimeout(check, 2000);
+        };
+        setTimeout(check, 1000);
+    });
+}
+
+async function loadTasks() {
+    const tasks = await api('/tasks');
+    const tbody = document.getElementById('taskList');
+
+    if (!tasks || tasks.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="empty-msg">Brak zadan.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = tasks.map(t => {
+        const result = t.result !== null && t.result !== undefined
+            ? t.result.toFixed(10)
+            : '-';
+        const time = t.executionTimeMs !== null && t.executionTimeMs !== undefined
+            ? t.executionTimeMs + ' ms'
+            : '-';
+        return '<tr>' +
+            '<td class="mono">' + shortId(t.taskId) + '</td>' +
+            '<td>' + t.method + '</td>' +
+            '<td class="mono" style="font-size:12px;">' + esc(t.function) + '</td>' +
+            '<td>[' + t.a + ', ' + t.b + ']</td>' +
+            '<td>' + (t.intervals >= 1000000 ? (t.intervals/1000000) + 'M' : (t.intervals >= 1000 ? (t.intervals/1000) + 'K' : t.intervals)) + '</td>' +
+            '<td>' + t.workers + '</td>' +
+            '<td>' + statusBadge(t.status) + '</td>' +
+            '<td class="mono" style="font-size:12px;">' + result + '</td>' +
+            '<td>' + time + '</td>' +
+            '<td>' +
+                '<button class="btn btn-sm" style="background:#334155;color:#e2e8f0;" onclick="showDetail(\'' + t.taskId + '\')">Detale</button> ' +
+                '<button class="btn btn-sm btn-success" onclick="showBenchmark(\'' + t.taskId + '\')">Benchmark</button>' +
+            '</td>' +
+            '</tr>';
+    }).join('');
+}
+
+async function showDetail(taskId) {
+    const t = await api('/tasks/' + taskId);
+    if (!t) return;
+    if (t.error) { toast(t.error, false); return; }
+
+    const panel = document.getElementById('detailPanel');
+    const content = document.getElementById('detailContent');
+
+    const errHtml = t.errorMessage
+        ? '<div class="section-title" style="color:#f87171;">Blad</div><div class="result-box">' + esc(t.errorMessage) + '</div>'
+        : '';
+
+    content.innerHTML =
+        '<div class="detail-row">' +
+            '<div class="detail-item"><div class="detail-label">Task ID</div><div class="detail-value mono">' + t.taskId + '</div></div>' +
+            '<div class="detail-item"><div class="detail-label">Metoda</div><div class="detail-value">' + t.method + '</div></div>' +
+            '<div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">' + statusBadge(t.status) + '</div></div>' +
+        '</div>' +
+        '<div class="detail-row">' +
+            '<div class="detail-item"><div class="detail-label">Funkcja</div><div class="detail-value mono">f(x) = ' + esc(t.function) + '</div></div>' +
+            '<div class="detail-item"><div class="detail-label">Przedzial</div><div class="detail-value">[' + t.a + ', ' + t.b + ']</div></div>' +
+            '<div class="detail-item"><div class="detail-label">Podprzedzialow</div><div class="detail-value">' + t.intervals.toLocaleString('pl-PL') + '</div></div>' +
+            '<div class="detail-item"><div class="detail-label">Workerow</div><div class="detail-value">' + t.workers + '</div></div>' +
+        '</div>' +
+        '<div class="detail-row">' +
+            '<div class="detail-item"><div class="detail-label">Utworzono</div><div class="detail-value">' + (t.createdAt || '-') + '</div></div>' +
+            '<div class="detail-item"><div class="detail-label">Zakonczono</div><div class="detail-value">' + (t.completedAt || '-') + '</div></div>' +
+            '<div class="detail-item"><div class="detail-label">Czas wykonania</div><div class="detail-value">' + (t.executionTimeMs !== null ? t.executionTimeMs + ' ms' : '-') + '</div></div>' +
+        '</div>' +
+        (t.result !== null && t.result !== undefined
+            ? '<div class="section-title">Wynik calkowania</div><div class="result-box" style="font-size:18px; color:#34d399; text-align:center;">' + t.result + '</div>'
+            : '') +
+        errHtml;
+
+    panel.style.display = 'block';
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function showBenchmark(taskId) {
+    toast('Uruchamiam benchmark (1/2/4/8 workerow)...');
+    const bm = await api('/tasks/' + taskId + '/benchmark');
+    if (!bm) return;
+    if (bm.error) { toast(bm.error, false); return; }
+
+    const panel = document.getElementById('benchmarkPanel');
+    const content = document.getElementById('benchmarkContent');
+
+    let rows = '';
+    if (bm.results) {
+        bm.results.forEach(r => {
+            const sp = bm.speedup ? (bm.speedup[String(r.workers)] || '-') : '-';
+            const eff = bm.efficiency ? (bm.efficiency[String(r.workers)] || '-') : '-';
+            rows += '<tr>' +
+                '<td>' + r.workers + '</td>' +
+                '<td>' + r.avgTimeMs.toFixed(2) + '</td>' +
+                '<td>' + r.minTimeMs.toFixed(2) + '</td>' +
+                '<td>' + r.maxTimeMs.toFixed(2) + '</td>' +
+                '<td>' + sp + '</td>' +
+                '<td>' + eff + '</td>' +
+                '<td class="mono">' + r.result.toFixed(10) + '</td>' +
+                '</tr>';
+        });
+    }
+
+    content.innerHTML =
+        '<div class="detail-row">' +
+            '<div class="detail-item"><div class="detail-label">Metoda</div><div class="detail-value">' + bm.method + '</div></div>' +
+            '<div class="detail-item"><div class="detail-label">Konfiguracja</div><div class="detail-value">2 warmup + 5 pomiarow</div></div>' +
+        '</div>' +
+        '<table class="benchmark-table">' +
+            '<thead><tr>' +
+                '<th>Workerow</th>' +
+                '<th>Sredni (ms)</th>' +
+                '<th>Min (ms)</th>' +
+                '<th>Max (ms)</th>' +
+                '<th>S(N) speedup</th>' +
+                '<th>E(N) efektywnosc</th>' +
+                '<th>Wynik</th>' +
+            '</tr></thead>' +
+            '<tbody>' + rows + '</tbody>' +
+        '</table>' +
+        '<div style="margin-top:12px; font-size:12px; color:#64748b;">' +
+            'S(N) = T(1) / T(N) &nbsp;&nbsp;|&nbsp;&nbsp; E(N) = S(N) / N' +
+        '</div>';
+
+    panel.style.display = 'block';
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function startAutoRefresh() {
+    if (refreshTimer) clearInterval(refreshTimer);
+    refreshTimer = setInterval(() => {
+        if (document.getElementById('autoRefresh').checked) {
+            loadTasks();
+        }
+    }, 2000);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadTasks();
+    startAutoRefresh();
+});
+</script>
+</body>
+</html>
