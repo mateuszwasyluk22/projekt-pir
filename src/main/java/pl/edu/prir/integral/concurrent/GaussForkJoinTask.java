@@ -5,21 +5,6 @@ import pl.edu.prir.integral.sequential.GaussWeights;
 import java.util.concurrent.RecursiveTask;
 import java.util.function.DoubleUnaryOperator;
 
-/**
- * Zadanie rekurencyjne ForkJoin do rownoleglego calkowania kwadratura Gaussa-Legendre.
- *
- * Algorytm (composite Gauss 3-point):
- *   [a, b] dzielimy na K subprzedzialow
- *   Kazdy subprzedzial [a_k, b_k] = [a + k*subDx, a + (k+1)*subDx]
- *     x_kj = (subDx/2) * t_j + (a_k + b_k)/2   (transformacja z [-1,1])
- *     wynik_k = (subDx/2) * SUM(w_j * f(x_kj))
- *   Wynik calkowity = SUM wynik_k
- *
- * Rownolegly podzial:
- *   - Dzielimy liste K subprzedzialow na polowy (jak merge sort)
- *   - Kazdy watek liczy Gaussa na swoich subprzedzialach
- *   - ForkJoin laczy sume
- */
 public class GaussForkJoinTask extends RecursiveTask<Double> {
 
     private static final long THRESHOLD = 10_000L;
@@ -81,7 +66,6 @@ public class GaussForkJoinTask extends RecursiveTask<Double> {
             }
         }
 
-        // kazdy subprzedzial ma factor (subDx/2) - mnozymy sume przez niego
         return (subDx / 2.0) * sum;
     }
 }
