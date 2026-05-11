@@ -3,22 +3,7 @@ package pl.edu.prir.integral.concurrent;
 import java.util.concurrent.RecursiveTask;
 import java.util.function.DoubleUnaryOperator;
 
-/**
- * Zadanie rekurencyjne ForkJoin do rownoleglego calkowania metoda trapezow.
- *
- * Algorytm (composite trapezoidal rule):
- *   sum = f(a)/2 + f(x_1) + f(x_2) + ... + f(x_{n-1}) + f(b)/2
- *   wynik = dx * sum
- *
- * Rownolegly podzial:
- *   - Kazde podzadanie liczy sume czastkowa dla zakresu [start, end)
- *   - Brzegowe punkty (i=0, i=n) maja wage 0.5, reszta 1.0
- *   - ForkJoin dzieli zakres na dwie polowy
- *
- * Uwaga: punkt startowy i endowy moga byc brzegowe (waga 0.5).
- * Podzial rekurencyjny: punkt mid dostaje wage 0.5 w obu podzadaniach
- * (suma 0.5+0.5=1.0 = poprawna waga wewnetrznego punktu).
- */
+
 public class TrapezoidForkJoinTask extends RecursiveTask<Double> {
 
     private static final long THRESHOLD = 50_000L;
@@ -31,15 +16,7 @@ public class TrapezoidForkJoinTask extends RecursiveTask<Double> {
     private final double startWeight;
     private final double endWeight;
 
-    /**
-     * @param start        indeks pierwszego podprzedzialu (wlacznie)
-     * @param end          indeks ostatniego podprzedzialu (wykluczajaco)
-     * @param a            dolna granica calkowania
-     * @param dx           szerokosc podprzedzialu
-     * @param f            funkcja podcalkowa
-     * @param startWeight  waga punktu start (0.5 dla brzegu, 1.0 wewnatrz)
-     * @param endWeight    waga punktu end (0.5 dla brzegu, 1.0 wewnatrz)
-     */
+    
     public TrapezoidForkJoinTask(long start, long end, double a, double dx,
                                   DoubleUnaryOperator f, double startWeight, double endWeight) {
         this.start = start;
@@ -60,8 +37,6 @@ public class TrapezoidForkJoinTask extends RecursiveTask<Double> {
 
         long mid = start + count / 2;
 
-        // Punkt mid jest wspoldzielony: lewa ma endWeight=0.5, prawa ma startWeight=0.5
-        // Razem daja wage 1.0 (poprawne)
         TrapezoidForkJoinTask left  = new TrapezoidForkJoinTask(start, mid, a, dx, f,
                 startWeight, 0.5);
         TrapezoidForkJoinTask right = new TrapezoidForkJoinTask(mid, end, a, dx, f,
