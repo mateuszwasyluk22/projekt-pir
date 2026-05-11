@@ -207,4 +207,4 @@ curl http://localhost:8080/tasks
 ---
 
 ## Autorzy
-Projekt semestralny — Programowanie Równoległe i Rozproszone
+Mikołaj Zdunek, Mateusz Wasyluk, Krzysztof Sosnówka
