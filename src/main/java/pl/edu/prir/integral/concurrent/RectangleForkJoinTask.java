@@ -3,21 +3,10 @@ package pl.edu.prir.integral.concurrent;
 import java.util.concurrent.RecursiveTask;
 import java.util.function.DoubleUnaryOperator;
 
-/**
- * Zadanie rekurencyjne ForkJoin do rownoleglego calkowania metoda prostokatow.
- *
- * Algorytm:
- *   - Dzielimy n podprzedzialow na dwie polowy
- *   - Lewa polowa: fork (asynchronicznie)
- *   - Prawa polowa: compute (na biezacym watku)
- *   - Laczymy wyniki (suma)
- *
- *   Wynik = dx * SUM f(a + (i+0.5)*dx) dla i = start..end-1
- *   Kazde podzadanie liczy SUM dla swojego zakresu i.
- */
+
 public class RectangleForkJoinTask extends RecursiveTask<Double> {
 
-    /** Ponizej tego progu liczymy sekwencyjnie (lisc) */
+
     private static final long THRESHOLD = 50_000L;
 
     private final long start;
