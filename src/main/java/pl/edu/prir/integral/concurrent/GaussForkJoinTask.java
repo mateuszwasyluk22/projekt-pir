@@ -15,13 +15,7 @@ public class GaussForkJoinTask extends RecursiveTask<Double> {
     private final double subDx;
     private final DoubleUnaryOperator f;
 
-    /**
-     * @param startK  indeks pierwszego subprzedzialu (wlacznie)
-     * @param endK    indeks ostatniego subprzedzialu (wykluczajaco)
-     * @param a       dolna granica calkowania
-     * @param subDx   szerokosc pojedynczego subprzedzialu = (b-a)/K
-     * @param f       funkcja podcalkowa
-     */
+
     public GaussForkJoinTask(long startK, long endK, double a, double subDx,
                               DoubleUnaryOperator f) {
         this.startK = startK;
